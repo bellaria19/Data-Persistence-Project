@@ -1,9 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem; // MIGRATED: New Input System namespace
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using UnityEngine.InputSystem; // MIGRATED: New Input System namespace
 
 public class MainManager : MonoBehaviour
 {
@@ -13,6 +13,7 @@ public class MainManager : MonoBehaviour
 
     public Text ScoreText;
     public GameObject GameOverText;
+    public Text BestScoreText;
 
     private bool m_Started = false;
     private int m_Points;
@@ -21,32 +22,38 @@ public class MainManager : MonoBehaviour
 
     // MIGRATED: InputAction replaces Input.GetKeyDown(KeyCode.Space)
     private InputAction m_LaunchAction;
+    private InputAction m_ExitAction;
 
     // MIGRATED: bind the Space key as a button action
     void Awake()
     {
         m_LaunchAction = new InputAction("Launch", InputActionType.Button, "<Keyboard>/space");
+        m_ExitAction = new InputAction("Exit", InputActionType.Button, "<Keyboard>/escape");
     }
 
     // MIGRATED: enable the action while the component is active
     void OnEnable()
     {
         m_LaunchAction.Enable();
+        m_ExitAction.Enable();
     }
 
     // MIGRATED: disable the action when the component is inactive
     void OnDisable()
     {
         m_LaunchAction.Disable();
+        m_ExitAction.Disable();
     }
 
     // Start is called before the first frame update
     void Start()
     {
+        SetBest();
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
 
-        int[] pointCountArray = new [] {1,1,2,2,5,5};
+        int[] pointCountArray = new[] { 1, 1, 2, 2, 5, 5 };
         for (int i = 0; i < LineCount; ++i)
         {
             for (int x = 0; x < perLine; ++x)
@@ -80,7 +87,20 @@ public class MainManager : MonoBehaviour
             {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
+            else if (m_ExitAction.WasPressedThisFrame())
+            {
+                SceneManager.LoadScene(0);
+            }
         }
+    }
+
+    void SetBest()
+    {
+        BestScoreText.text =
+            "Best Score : "
+            + PlayerPrefsManager.HighScoreName
+            + " : "
+            + PlayerPrefsManager.HighScore;
     }
 
     void AddPoint(int point)
@@ -92,6 +112,7 @@ public class MainManager : MonoBehaviour
     public void GameOver()
     {
         m_GameOver = true;
+        PlayerPrefsManager.CheckHighScore(PlayerPrefsManager.PlayerName, m_Points);
         GameOverText.SetActive(true);
     }
 }
